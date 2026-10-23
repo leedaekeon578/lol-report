@@ -17,7 +17,7 @@ def run(fake: FakeRiot, riot_id: str = "Name#KR1"):
 class FlowTest(unittest.TestCase):
     def test_stops_after_twenty_rift_matches(self):
         ids = [f"KR_{i}" for i in range(30)]
-        fake = FakeRiot(ids=ids, matches={i: make_match(first_blood=False) for i in ids})
+        fake = FakeRiot(ids=ids, matches={i: make_match(team_first_blood=False) for i in ids})
         report, sleeps = run(fake)
         self.assertEqual(report["searched_matches"], 20)
         self.assertEqual(report["rift_matches"], 20)
@@ -37,9 +37,9 @@ class FlowTest(unittest.TestCase):
         ids = ["KR_1", "KR_2", "KR_3", "KR_4"]
         matches = {
             "KR_1": make_match(queue_id=450),
-            "KR_2": make_match(queue_id=420, first_blood=True, win=True),
-            "KR_3": make_match(queue_id=440, first_blood=True, win=False),
-            "KR_4": make_match(queue_id=420, first_blood=False),
+            "KR_2": make_match(queue_id=420, team_first_blood=True, win=True),
+            "KR_3": make_match(queue_id=440, team_first_blood=True, win=False),
+            "KR_4": make_match(queue_id=420, team_first_blood=False),
         }
         report, _ = run(FakeRiot(ids=ids, matches=matches))
         self.assertEqual(report["searched_matches"], 4)
@@ -56,7 +56,7 @@ class FlowTest(unittest.TestCase):
         ids = [f"KR_{i}" for i in range(100)]
         matches = {i: make_match(queue_id=450) for i in ids}
         for i in ids[:5]:
-            matches[i] = make_match(queue_id=420, first_blood=False)
+            matches[i] = make_match(queue_id=420, team_first_blood=False)
         report, sleeps = run(FakeRiot(ids=ids, matches=matches))
         self.assertEqual(report["searched_matches"], 100)
         self.assertEqual(report["rift_matches"], 5)
@@ -65,7 +65,7 @@ class FlowTest(unittest.TestCase):
 
     def test_zero_games(self):
         ids = ["KR_1", "KR_2"]
-        fake = FakeRiot(ids=ids, matches={i: make_match(first_blood=False) for i in ids})
+        fake = FakeRiot(ids=ids, matches={i: make_match(team_first_blood=False) for i in ids})
         report, _ = run(fake)
         self.assertEqual(report["games"], [])
         self.assertEqual(
@@ -75,7 +75,7 @@ class FlowTest(unittest.TestCase):
 
     def test_rate_limit_on_detail_stops_immediately(self):
         ids = [f"KR_{i}" for i in range(10)]
-        matches = {i: make_match(first_blood=False) for i in ids}
+        matches = {i: make_match(team_first_blood=False) for i in ids}
         matches["KR_2"] = 429
         fake = FakeRiot(ids=ids, matches=matches)
         sleeps: list[float] = []
@@ -89,7 +89,7 @@ class FlowTest(unittest.TestCase):
         for failure in failures:
             with self.subTest(failure=repr(failure)):
                 ids = [f"KR_{i}" for i in range(5)]
-                matches = {i: make_match(first_blood=False) for i in ids}
+                matches = {i: make_match(team_first_blood=False) for i in ids}
                 matches["KR_1"] = failure
                 fake = FakeRiot(ids=ids, matches=matches)
                 with self.assertRaises(OtherError):
@@ -124,6 +124,29 @@ class FlowTest(unittest.TestCase):
             self.assertEqual(request.headers["User-Agent"], USER_AGENT)
             self.assertEqual(request.headers["X-Riot-Token"], DUMMY_KEY)
             self.assertNotIn(DUMMY_KEY, str(request.url))
+
+    def test_both_teams_false_counts_as_rift_but_not_as_game(self):
+        ids = ["KR_1", "KR_2", "KR_3"]
+        matches = {
+            "KR_1": make_match(team_first_blood=False, opponent_first_blood=False),
+            "KR_2": make_match(team_first_blood=True),
+            "KR_3": make_match(team_first_blood=False),
+        }
+        report, _ = run(FakeRiot(ids=ids, matches=matches))
+        self.assertEqual(report["searched_matches"], 3)
+        self.assertEqual(report["rift_matches"], 3)
+        self.assertEqual([g["match_id"] for g in report["games"]], ["KR_2"])
+
+    def test_broken_team_data_stops_everything(self):
+        ids = [f"KR_{i}" for i in range(5)]
+        matches = {i: make_match(team_first_blood=False) for i in ids}
+        del matches["KR_1"]["info"]["teams"]
+        fake = FakeRiot(ids=ids, matches=matches)
+        sleeps: list[float] = []
+        with self.assertRaises(OtherError):
+            build_report(fake.client(), "Name#KR1", sleep=sleeps.append)
+        self.assertEqual(len(fake.match_requests()), 2)  # 이후 호출 없음
+        self.assertEqual(len(sleeps), 1)
 
     def test_input_is_trimmed_and_case_kept_in_account_request(self):
         fake = FakeRiot()

@@ -11,23 +11,50 @@ PUUID = "fake-puuid"
 
 def make_match(
     queue_id: int = 420,
-    first_blood: bool = True,
+    team_first_blood: bool = True,
     win: bool = True,
     champion: str = "Ahri",
     start_ms: int = 1_700_000_000_000,
     puuid: str = PUUID,
+    my_team_id: int = 100,
+    opponent_first_blood: bool | None = None,
+    my_first_blood_kill: bool = False,
 ) -> dict:
+    """team_first_blood 는 내 팀의 objectives.champion.first 값이다.
+
+    opponent_first_blood 를 생략하면 내 팀 값의 반대로 둔다(두 팀 모두 false 는 둘 다 False 로 지정).
+    my_first_blood_kill 은 내 참가자의 개인 firstBloodKill 값으로, 판정에는 쓰이지 않는다.
+    """
+    opponent_team_id = 200 if my_team_id == 100 else 100
+    if opponent_first_blood is None:
+        opponent_first_blood = not team_first_blood
     return {
         "info": {
             "queueId": queue_id,
             "gameStartTimestamp": start_ms,
             "participants": [
-                {"puuid": "other", "championName": "Zed", "win": not win},
+                {
+                    "puuid": "other",
+                    "teamId": opponent_team_id,
+                    "championName": "Zed",
+                    "win": not win,
+                },
                 {
                     "puuid": puuid,
+                    "teamId": my_team_id,
                     "championName": champion,
                     "win": win,
-                    "firstBloodKill": first_blood,
+                    "firstBloodKill": my_first_blood_kill,
+                },
+            ],
+            "teams": [
+                {
+                    "teamId": my_team_id,
+                    "objectives": {"champion": {"first": team_first_blood}},
+                },
+                {
+                    "teamId": opponent_team_id,
+                    "objectives": {"champion": {"first": opponent_first_blood}},
                 },
             ],
         }
