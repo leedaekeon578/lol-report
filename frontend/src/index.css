@@ -1,0 +1,178 @@
+:root {
+  --bg: #ffffff;
+  --text: #1f2430;
+  --muted: #5b6475;
+  --border: #d5dae3;
+  --accent: #2459d6;
+  --accent-text: #ffffff;
+  --win: #1a7f46;
+  --loss: #b3261e;
+  --notice-bg: #f3f5fa;
+  --error-bg: #fdecea;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14171f;
+    --text: #e8ebf2;
+    --muted: #a0a9bb;
+    --border: #343b4b;
+    --accent: #7aa2ff;
+    --accent-text: #0d1117;
+    --win: #5fd18d;
+    --loss: #ff8a80;
+    --notice-bg: #1d2230;
+    --error-bg: #3a1f1d;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', 'Malgun Gothic', sans-serif;
+  line-height: 1.5;
+}
+
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.6rem;
+}
+
+.lead {
+  margin: 0 0 1.25rem;
+  color: var(--muted);
+}
+
+.search label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.search-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.search button {
+  padding: 0.6rem 1.1rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.search button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+section[aria-label='결과'] {
+  margin-top: 1.25rem;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+}
+
+.summary div {
+  padding: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  text-align: center;
+}
+
+.summary dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.summary dd {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.notice {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--notice-bg);
+}
+
+.notice p {
+  margin: 0;
+}
+
+.notice strong + p {
+  margin-top: 0.25rem;
+}
+
+.notice-error {
+  border-color: var(--loss);
+  background: var(--error-bg);
+}
+
+.games {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.games li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.games .champion {
+  flex: 1;
+  font-weight: 600;
+}
+
+.games .result {
+  min-width: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.result.win {
+  color: var(--win);
+}
+
+.result.loss {
+  color: var(--loss);
+}
+
+.games time {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
