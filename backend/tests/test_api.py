@@ -67,7 +67,7 @@ class SuccessTest(ApiTestBase):
                 matches={
                     "KR_1": make_match(win=True, champion="Ahri"),
                     "KR_2": make_match(win=False, champion="Zed"),
-                    "KR_3": make_match(first_blood=False),
+                    "KR_3": make_match(team_first_blood=False),
                 },
             )
         )
@@ -125,6 +125,12 @@ class ErrorTest(ApiTestBase):
         self.use(FakeRiot(account=500))
         self.assert_error(self.post(), 502, "OTHER_ERROR")
         self.use(FakeRiot(ids=["KR_1"], matches={"KR_1": 404}))
+        self.assert_error(self.post(), 502, "OTHER_ERROR")
+
+    def test_broken_team_data_is_other_error(self):
+        detail = make_match()
+        del detail["info"]["teams"][0]["objectives"]["champion"]["first"]
+        self.use(FakeRiot(ids=["KR_1"], matches={"KR_1": detail}))
         self.assert_error(self.post(), 502, "OTHER_ERROR")
 
     def test_invalid_input(self):

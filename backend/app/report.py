@@ -36,8 +36,22 @@ def _iso_utc(milliseconds: int) -> str:
     return moment.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def my_team_first_blood(info: dict, me: dict) -> bool:
+    """D-012: 내 참가자의 teamId 로 내 팀을 찾고 objectives.champion.first 를 읽는다.
+
+    값이 없거나 bool 이 아니거나 내 팀을 찾지 못하면 OtherError 를 낸다.
+    """
+    team = next((t for t in info["teams"] if t["teamId"] == me["teamId"]), None)
+    if team is None:
+        raise OtherError()
+    first = team["objectives"]["champion"]["first"]
+    if not isinstance(first, bool):
+        raise OtherError()
+    return first
+
+
 def read_match(detail: dict, puuid: str, match_id: str) -> tuple[bool, dict | None]:
-    """(협곡 큐 여부, 퍼스트블러드 킬 게임이면 목록 항목)을 돌려준다."""
+    """(협곡 큐 여부, 내 팀이 퍼스트블러드를 한 게임이면 목록 항목)을 돌려준다."""
     try:
         info = detail["info"]
         if info["queueId"] not in RIFT_QUEUES:
@@ -45,7 +59,7 @@ def read_match(detail: dict, puuid: str, match_id: str) -> tuple[bool, dict | No
         me = next((p for p in info["participants"] if p["puuid"] == puuid), None)
         if me is None:
             raise OtherError()
-        if me.get("firstBloodKill") is not True:  # D-007
+        if not my_team_first_blood(info, me):  # D-012
             return True, None
         return True, {
             "match_id": match_id,
