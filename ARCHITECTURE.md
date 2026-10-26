@@ -26,8 +26,13 @@ PRD.md(확정)를 구조로 옮긴 문서다. 결정된 항목은 DECISIONS.md �
 - 브라우저 ↔ 우리 서버: 조회 요청 1종. 입력은 닉네임#태그, 응답은 요약 + 게임 목록 + 조회한 매치 수.
   응답의 게임 항목 구성은 D-009.
   개발 중에는 화면 개발 서버(Vite)가 /api 를 백엔드로 넘긴다. CORS 는 쓰지 않는다 (D-013).
-- 우리 서버 → Riot: 계정 조회, 매치 목록, 매치 상세 3종 호출. 구체 경로·파라미터는 Riot 공식 문서 확인 후 기록한다.
+- 우리 서버 → Riot: 계정 조회, 매치 목록, 매치 상세 3종 호출. 아래 경로·파라미터는 developer.riotgames.com/apis 에서 확인했다.
+  - 계정: `GET /riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine}` (둘 다 필수). 응답 AccountDto(puuid, gameName, tagLine).
+  - 매치 목록: `GET /lol/match/v5/matches/by-puuid/{puuid}/ids`. 쿼리 startTime, endTime, queue, type, start(기본 0), count(기본 20, 유효값 0~100). 응답은 문자열 목록.
+  - 매치 상세: `GET /lol/match/v5/matches/{matchId}`. 응답 MatchDto (판정 필드는 D-012).
+  - 호스트 전체 주소와 인증 헤더 이름(X-Riot-Token)은 공식 페이지에서 확인 못 함. 현재 코드(backend/app/riot_client.py)는 호스트 `asia.api.riotgames.com`, 헤더 `X-Riot-Token`을 쓴다. 코드를 읽어 확인한 내용이며, 이번에 실제로 호출해 확인한 것은 아니다(키 만료).
 - 지역은 KR 고정.
+  - 라우팅 값(공식): account-v1은 americas · asia · europe 3개이고, 어느 지역으로도 어떤 계정이든 조회할 수 있다(가장 가까운 클러스터 권장). match-v5는 AMERICAS · ASIA · EUROPE · SEA 4개이며 KR은 ASIA에 속한다.
 - 협곡 큐 필터 기준: 큐 420(랭크 솔로)·440(랭크 자유), 맵은 소환사의 협곡 (D-004)
 - 팀 퍼스트블러드 판정 필드: info.teams[].objectives.champion.first, 내 팀은 내 참가자의 teamId (D-012)
 - 호출 횟수·간격 조절: 매치 상세 호출 사이 0.1초, 429 면 중단·오류 안내 (D-006)
